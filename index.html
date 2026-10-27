@@ -31,6 +31,8 @@ body[data-phase] .hero p{display:none}
 .personal-results .kpis{margin:10px 0}.personal-results .kpi b{color:#fff}
 .narration{margin-top:12px}
 @media(max-width:720px){.scene-visual{aspect-ratio:16/9}}
+
+.answer-review{border-top:1px solid rgba(170,190,181,.3);padding:14px 0;margin-top:12px}.review-option{padding:10px 12px;border:1px solid rgba(150,170,170,.22);border-radius:9px;margin:8px 0;line-height:1.6}.review-correct{border-color:#51ae8e;background:rgba(64,145,107,.15)}.answer-review .small{margin:8px 0;color:#e5c785}
 </style></head><body><main><header class="top"><div class="brand">BREAK <span>THE BIAS</span></div><div class="pill">CASE FILE 07 · LEARNING EXPERIENCE V3</div></header><section class="hero"><div class="stage">Organizational Behavior & Learning</div><h1>คุณจะตัดสินอย่างไร<br>เมื่อความจริงยังไม่ครบ?</h1><p class="muted">เกมสืบสวนคดีข้อมูลรั่วไหล · 2 แฟ้มลับ · ลงคะแนนสด · Attribution Theory</p></section><div id="message" class="notice hide"></div>
 <section id="setup" class="card"><h2>ตั้งค่าการเชื่อมต่อ Firebase</h2><p class="muted">วางค่า Firebase Web App Config จาก Firebase Console (ระบบจะบันทึกค่าไว้ในเบราว์เซอร์นี้) แล้วเริ่มเล่นได้ทันที</p><label>Firebase Config (JSON)</label><textarea id="configInput" placeholder='{"apiKey":"...","authDomain":"...","databaseURL":"https://...-default-rtdb...","projectId":"...","appId":"..."}'></textarea><div class="stack"><button id="connect">เชื่อมต่อ</button><span class="muted small">ต้องเปิด Anonymous Authentication และ Realtime Database พร้อม Rules ตามคู่มือ</span></div></section>
 <section id="lobby" class="grid hide"><div class="card"><h2>🎮 เข้าร่วมเป็นผู้เล่น</h2><label>รหัสห้อง 6 ตัว</label><input id="roomCode" maxlength="6" placeholder="เช่น BIAS26"><label>ชื่อเล่น / รหัสผู้เข้าร่วม</label><input id="nickname" maxlength="24" placeholder="เช่น Student07"><button id="join" style="margin-top:16px">เข้าร่วมเกม</button></div><div class="card"><h2>🧭 เปิดห้องสำหรับผู้ดำเนินเกม</h2><p class="muted">เปิดห้องใหม่ แล้วแชร์รหัสห้องให้เพื่อนผ่าน Teams หน้าจอนี้จะเป็น Admin Dashboard</p><button id="create">สร้างห้องใหม่</button><p class="small muted">ผู้สร้างห้องมีสิทธิ์ควบคุมเกมจากบัญชี anonymous ของเบราว์เซอร์นี้เท่านั้น อย่าล้างข้อมูลเบราว์เซอร์ระหว่างเล่น</p></div></section>
@@ -74,6 +76,42 @@ const structuredTest={
  {id:'s3',label:'ประยุกต์ · การตัดสินใจ',question:'หากต้องจัดการความเสี่ยงก่อนทราบสาเหตุทั้งหมด ควรทำอย่างไร?',options:['ตัดสินโทษทันทีเพราะต้องรักษามาตรฐาน','ปล่อยให้ทุกอย่างดำเนินต่อโดยไม่ตรวจสอบ','จัดแผนสำรองงานพร้อมตรวจข้อมูลและรับฟังคำชี้แจงก่อนระบุความรับผิด'],correct:2,points:3}
  ]
 };
+// Post-test teaching feedback. Reveal ONLY after host advances to Results & Closing.
+const postExplanations=[
+ {question:post.q1,options:post.a1,correct:post.correct1,why:[
+ 'ถูกต้อง: สาเหตุที่ยกมาอยู่ที่การส่งข้อมูลล่าช้าจากทีมอื่น ซึ่งเป็นเงื่อนไขแวดล้อมหรือ External Attribution อย่างไรก็ตาม ยังต้องตรวจสอบว่าทีมอื่นส่งช้าจริงหรือไม่',
+ 'ไม่ถูกต้อง: การที่งานของนนท์ส่งช้าเป็นผลลัพธ์ที่เกิดกับนนท์ แต่สาเหตุในข้อความระบุว่าเกิดจากทีมอื่น จึงไม่ใช่การอ้างสาเหตุภายในตัวนนท์',
+ 'ไม่ถูกต้อง: Fundamental Attribution Error คือแนวโน้มให้น้ำหนักปัจจัยส่วนบุคคลมากเกินไปและมองข้ามสถานการณ์ การกล่าวถึงปัจจัยจากทีมอื่นจึงไม่ใช่ข้อผิดพลาดนี้โดยนิยาม' ]},
+ {question:post.q2,options:post.a2,correct:post.correct2,why:[
+ 'ถูกต้อง: ลำดับเวลางาน หลักฐานการรอข้อมูล และคำชี้แจงช่วยตรวจสอบข้อเท็จจริงและพิจารณาสาเหตุทั้งภายในและภายนอกก่อนตัดสิน',
+ 'ไม่ถูกต้อง: คะแนนความนิยมสะท้อนความเห็นของผู้อื่น อาจมีอคติ และไม่ยืนยันสาเหตุของการส่งงานล่าช้า',
+ 'ไม่ถูกต้อง: ประสบการณ์ของหัวหน้าอาจช่วยตั้งสมมติฐาน แต่ไม่ควรใช้แทนหลักฐานที่ตรวจสอบได้และการรับฟังผู้เกี่ยวข้อง' ]},
+ {question:structuredTest.post[0].question,options:structuredTest.post[0].options,correct:structuredTest.post[0].correct,why:[
+ 'ถูกต้อง: ผู้จัดการสรุปจากพฤติกรรมครั้งหนึ่งไปเป็นลักษณะนิสัย โดยไม่ตรวจสอบเหตุขัดข้อง เป็นความเสี่ยงของการให้น้ำหนักสาเหตุภายในมากเกินไป ซึ่งสัมพันธ์กับ Fundamental Attribution Error',
+ 'ไม่ถูกต้อง: โจทย์ระบุชัดว่ายังไม่ได้ตรวจสอบเหตุขัดข้อง จึงไม่ใช่การพิจารณาหลักฐานหลายด้าน',
+ 'ไม่ถูกต้อง: ผู้จัดการไม่ได้ให้ความสำคัญกับบริบทมากเกินไป แต่กลับละเลยบริบทแล้วสรุปจากตัวบุคคล' ]},
+ {question:structuredTest.post[1].question,options:structuredTest.post[1].options,correct:structuredTest.post[1].correct,why:[
+ 'ไม่ถูกต้อง: คำว่าไม่ใส่ใจเป็นการตีความเจตนาของนนท์ ไม่ใช่ข้อมูลที่ตรวจสอบได้โดยตรง',
+ 'ไม่ถูกต้อง: คำว่าไม่มีความรับผิดชอบเป็นการสรุปลักษณะบุคคล ต้องมีข้อมูลประกอบมากกว่าพฤติกรรมที่สังเกตได้',
+ 'ถูกต้อง: จำนวนครั้งที่ขาดประชุมและวันที่ส่งงานเทียบกับเส้นตายตรวจสอบได้จากบันทึก แม้ข้อเท็จจริงเหล่านี้ยังไม่พิสูจน์เจตนาหรือสาเหตุ' ]},
+ {question:structuredTest.post[2].question,options:structuredTest.post[2].options,correct:structuredTest.post[2].correct,why:[
+ 'ไม่ถูกต้อง: การลงโทษทันทีทั้งที่สาเหตุยังไม่ชัด อาจเป็นการด่วนตัดสินและไม่เป็นธรรม แม้องค์การต้องรักษามาตรฐาน',
+ 'ไม่ถูกต้อง: การไม่ทำอะไรเลยอาจปล่อยให้ความเสี่ยงด้านงานดำเนินต่อไป การยังไม่สรุปความผิดไม่เท่ากับการไม่จัดการความเสี่ยง',
+ 'ถูกต้อง: แยกการควบคุมความเสี่ยงระยะสั้นออกจากการระบุความรับผิด และใช้หลักฐานกับคำชี้แจงก่อนสรุป เป็นการตัดสินใจที่รอบคอบและเป็นธรรม' ]}
+];
+function renderPostExplanations(){
+ const ans=data.answers?.post?.[uid];
+ if(!ans&&!host)return '<div class="notice">ยังไม่มีคำตอบ Post-test ของคุณ จึงยังไม่สามารถแสดงผลเฉลยรายบุคคลได้</div>';
+ let html='<section class="evidence" id="postAnswerReview"><h3>📘 เฉลย Post-test พร้อมเหตุผล (5 ข้อ · 15 คะแนน)</h3><p>เฉลยนี้เปิดหลังจบ Post-test เท่านั้น เพื่อให้ใช้ทบทวนการเรียนรู้ โดยแต่ละข้อมีคำตอบที่เหมาะสมที่สุดตามข้อมูลในโจทย์</p>';
+ for(let i=0;i<postExplanations.length;i++){
+  const q=postExplanations[i],chosen=!host&&ans?(i===0?ans.q1:i===1?ans.q2:ans.structured?.['s'+(i-1)]):null;
+  html+=`<div class="answer-review"><b>ข้อ ${i+1} · ${esc(q.question)}</b>`;
+  if(Number.isInteger(chosen))html+=`<p class="small">คำตอบของคุณ: <b>${String.fromCharCode(65+chosen)}</b> · ${chosen===q.correct?'✓ ตอบถูก (+3 คะแนน)':'✗ ยังไม่ถูก (0 คะแนน)'}</p>`;
+  for(let j=0;j<q.options.length;j++)html+=`<p class="review-option ${j===q.correct?'review-correct':''}"><b>${String.fromCharCode(65+j)}. ${esc(q.options[j])}</b> ${j===q.correct?'✓ คำตอบที่ถูกต้อง':''}<br>${esc(q.why[j])}</p>`;
+  html+='</div>';
+ }
+ return html+'<p><b>สรุป:</b> Attribution Theory ช่วยให้เราแยกสาเหตุภายในบุคคลออกจากสาเหตุภายนอก ส่วนการตัดสินใจอย่างมีเหตุผลต้องแยกข้อเท็จจริงจากข้อสันนิษฐาน ตรวจสอบหลักฐาน และทบทวนข้อสรุปเมื่อมีข้อมูลใหม่</p></section>';
+}
 const reasoningRubric=[
  {id:'r1',points:3,label:'แยกข้อเท็จจริงกับข้อสันนิษฐาน',question:'ก่อนเปิดแฟ้มปิดผนึก ข้อใดเป็นข้อสรุปที่หลักฐานรองรับได้จริง?',options:['ภาคินเป็นผู้ส่งไฟล์ให้คู่แข่ง เพราะมีบัญชีเข้าถึงไฟล์','มีหลักฐานว่าภาคินเข้าถึงข้อมูล แต่ยังพิสูจน์ไม่ได้ว่าเป็นผู้ส่งไฟล์ที่รั่ว','คุณธนาต้องเป็นผู้รั่วไหล เพราะเคยส่งไฟล์ไปอีเมลส่วนตัว'],correct:1},
  {id:'r2',points:3,label:'พิจารณาสาเหตุจากบุคคลและสถานการณ์',question:'หากต้องอธิบายการกระทำของภาคิน ข้อใดรอบคอบที่สุด?',options:['ภาคินเป็นคนไม่ซื่อสัตย์โดยนิสัย','ภาคินไม่มีความผิดทุกเรื่อง เพราะระบบมีช่องโหว่','การกระทำบางส่วนอาจเกี่ยวกับเจตนาของภาคิน ขณะเดียวกันระบบซิงก์และสิทธิ์เข้าถึงก็มีผล ต้องตรวจสอบแยกกัน'],correct:2},
@@ -163,7 +201,7 @@ if(p==='fileB'){title='ROUND 3 · HIDDEN FILE B';desc='พบผู้ต้อ�
 if(p==='verdict'){title='FINAL VERDICT · ตัดสินก่อนเปิดแฟ้มปิดผนึก';desc='CEO ขอข้อเสนอภายใน 3 นาที: หลักฐาน ณ ขณะนี้ยังไม่พิสูจน์ตัวผู้ส่งไฟล์ คุณจะระบุคนผิดหรือขอตรวจสอบเพิ่ม?';extra=listEvidence(evidenceB,'หลักฐานล่าสุด · ยังไม่ใช่เฉลย')+decisionForm(p);form='<button id="submitAnswer">ส่งคำตัดสินสุดท้าย</button>'}
 if(p==='reveal'){title='SEALED VERDICT · เปิดแฟ้มปิดผนึก';desc='เฉลยคดีสมมติ: ภาคินและคุณธนาร่วมกันทำผิดจริง แต่ข้อสรุปนี้เกิดขึ้นได้เพราะมีหลักฐานใหม่ที่เพิ่งตรวจสอบยืนยัน ไม่ใช่เพราะภาพลักษณ์หรือข้อสงสัยในรอบแรก';extra=listEvidence(sealedEvidence.slice(0,3),'🔓 FORENSIC EVIDENCE · เฉลย')+'<div class="notice"><b>คำถามชวนคิด:</b> ก่อนเห็นแฟ้มนี้ คุณมีหลักฐานพอจะกล่าวหาทั้งสองคนหรือยัง? การที่เดาถูกโดยไม่มีหลักฐาน ต่างจากการตัดสินใจอย่างมีเหตุผลอย่างไร?</div>'}
 if(p==='theory'){title='THEORY DEBRIEF · ATTRIBUTION THEORY';desc='ทฤษฎีการอ้างเหตุผล (Fritz Heider, 1958) อธิบายว่ามนุษย์พยายามตีความสาเหตุของพฤติกรรมจากตัวบุคคล (Internal) และจากสถานการณ์ (External)';extra='<div class="evidence"><b>คำถามสะท้อนคิด</b><p>1. รอบแรกคุณอธิบายพฤติกรรมภาคินจากนิสัยหรือสถานการณ์?</p><p>2. หลักฐานใดทำให้คุณเปลี่ยนคำอธิบาย?</p><p>3. แม้เฉลยว่าภาคินและคุณธนาทำผิดจริง เหตุใดเราจึงไม่ควรใช้ข้อสงสัยรอบแรกแทนหลักฐานพิสูจน์?</p><p><b>จำไว้:</b> แยกสิ่งที่เกิดขึ้นจริง ออกจากสาเหตุที่เราคาดเดา และตรวจสอบข้อมูลที่ยังขาด</p></div>'}
-if(p==='end'){title='BREAK THE BIAS · THE VERDICT';desc='ก่อนจะตัดสินใคร จงตั้งคำถามกับสิ่งที่เราคิดว่าเรารู้';extra='<div class="evidence">เราไม่จำเป็นต้องเดาคนผิดให้ถูก แต่ต้องรู้ว่าหลักฐานรองรับข้อสรุปของเราได้แค่ไหน</div>'}
+if(p==='end'){title='BREAK THE BIAS · THE VERDICT';desc='ก่อนจะตัดสินใคร จงตั้งคำถามกับสิ่งที่เราคิดว่าเรารู้';extra='<div class="evidence">เราไม่จำเป็นต้องเดาคนผิดให้ถูก แต่ต้องรู้ว่าหลักฐานรองรับข้อสรุปของเราได้แค่ไหน</div>'+renderPostExplanations()}
 const draft=(lastPhase===p&&!answered)?snapshotDraft():[];lastPhase=p;$('caseStage').textContent=names[idx];$('caseTitle').textContent=title;$('caseText').textContent=desc;$('caseExtra').innerHTML=extra;$('formArea').innerHTML=host?'':answered?'<div class="sent-confirm">✓ ส่งคำตอบแล้ว · บันทึกเรียบร้อย · รอรอบถัดไป</div>':form;updatePersonalScore(p);
 if(!host&&!answered&&form){restoreDraft(draft);const btn=$('submitAnswer');if(btn)btn.onclick=submitAnswer;const c=$('confidence');if(c)c.oninput=()=>$('confidenceText').textContent=c.value+'%'}
 renderResults(players,p);if(host)renderAdmin(idx,players);$('submissionStatus').innerHTML=host?`<div class="pending-confirm">สถานะการส่งรอบนี้: ${players.filter(([id])=>data.answers?.[p]?.[id]).length} / ${players.length} คน</div>`:(answered?'<div class="sent-confirm">✓ ส่งคำตอบรอบนี้แล้ว</div>':(form?'<div class="pending-confirm">● ยังไม่ได้ส่งคำตอบรอบนี้</div>':''))}
